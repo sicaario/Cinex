@@ -38,7 +38,15 @@ const MovieDetails: React.FC = () => {
         setMovie(movieData);
         setCredits(creditsData);
         setVideos(videosData.results.filter((video: Video) => video.site === 'YouTube'));
-        setWatchProviders(providersData.results?.US || null);
+        
+        // Better handling of watch providers data
+        const providers = providersData.results;
+        console.log('Watch providers data:', providers);
+        
+        // Try different regions if US is not available
+        const regionProviders = providers?.US || providers?.GB || providers?.CA || null;
+        setWatchProviders(regionProviders);
+        
       } catch (error) {
         console.error('Error fetching movie details:', error);
       } finally {
@@ -102,17 +110,50 @@ const MovieDetails: React.FC = () => {
       'disney plus': `https://www.disneyplus.com/search?q=${encodeURIComponent(movie.title)}`,
       'hulu': `https://www.hulu.com/search?q=${encodeURIComponent(movie.title)}`,
       'hbo max': `https://www.hbomax.com/search?q=${encodeURIComponent(movie.title)}`,
+      'max': `https://www.max.com/search?q=${encodeURIComponent(movie.title)}`,
       'apple tv plus': `https://tv.apple.com/search?term=${encodeURIComponent(movie.title)}`,
+      'apple tv': `https://tv.apple.com/search?term=${encodeURIComponent(movie.title)}`,
       'paramount plus': `https://www.paramountplus.com/search/?query=${encodeURIComponent(movie.title)}`,
       'peacock': `https://www.peacocktv.com/search?q=${encodeURIComponent(movie.title)}`,
       'youtube': `https://www.youtube.com/results?search_query=${encodeURIComponent(movie.title + ' full movie')}`,
       'google play movies & tv': `https://play.google.com/store/search?q=${encodeURIComponent(movie.title)}&c=movies`,
       'vudu': `https://www.vudu.com/content/movies/search?query=${encodeURIComponent(movie.title)}`,
-      'microsoft store': `https://www.microsoft.com/en-us/search?q=${encodeURIComponent(movie.title)}`
+      'microsoft store': `https://www.microsoft.com/en-us/search?q=${encodeURIComponent(movie.title)}`,
+      'amazon video': `https://www.amazon.com/s?k=${encodeURIComponent(movie.title)}&i=instant-video`,
+      'crunchyroll': `https://www.crunchyroll.com/search?q=${encodeURIComponent(movie.title)}`,
+      'funimation': `https://www.funimation.com/search/?q=${encodeURIComponent(movie.title)}`
     };
 
     return streamingUrls[providerName] || `https://www.google.com/search?q=${encodeURIComponent(movie.title + ' watch online ' + provider.provider_name)}`;
   };
+
+  // Create fallback streaming options if no providers are available
+  const fallbackProviders = [
+    {
+      provider_id: 999,
+      provider_name: 'Netflix',
+      logo_path: '/9A1JSVmSxsyaBK4SUFsYVqbAYfW.jpg',
+      type: 'search'
+    },
+    {
+      provider_id: 998,
+      provider_name: 'Amazon Prime Video',
+      logo_path: '/emthp39XA2YScoYL1p0sdbAH2WA.jpg',
+      type: 'search'
+    },
+    {
+      provider_id: 997,
+      provider_name: 'Disney Plus',
+      logo_path: '/7rwgEs15tFwyR9NPQ5vpzxTj19Q.jpg',
+      type: 'search'
+    },
+    {
+      provider_id: 996,
+      provider_name: 'YouTube',
+      logo_path: '/9A1JSVmSxsyaBK4SUFsYVqbAYfW.jpg',
+      type: 'search'
+    }
+  ];
 
   return (
     <div className="min-h-screen bg-black">
@@ -366,107 +407,156 @@ const MovieDetails: React.FC = () => {
                   <h3 className="text-xl font-bold text-white">Watch Online</h3>
                 </div>
                 
-                {watchProviders ? (
-                  <div className="space-y-6">
-                    {watchProviders.flatrate && (
-                      <div>
-                        <h4 className="font-semibold text-white mb-3">Streaming Services</h4>
-                        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                          {watchProviders.flatrate.map((provider) => (
-                            <motion.a
-                              key={provider.provider_id}
-                              href={getStreamingUrl(provider)}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              className="bg-gray-800/50 rounded-xl p-4 text-center hover:bg-gray-700/50 transition-all duration-300 border border-gray-600/30 hover:border-red-500/50"
-                              whileHover={{ scale: 1.05 }}
-                              whileTap={{ scale: 0.95 }}
-                            >
-                              <img
-                                src={getImageUrl(provider.logo_path, 'w92')}
-                                alt={provider.provider_name}
-                                className="w-16 h-16 rounded-lg mx-auto mb-3"
-                              />
-                              <span className="text-white text-sm font-medium block mb-2">{provider.provider_name}</span>
-                              <div className="flex items-center justify-center space-x-1 text-red-400 text-xs">
-                                <ExternalLink className="w-3 h-3" />
-                                <span>Watch Now</span>
-                              </div>
-                            </motion.a>
-                          ))}
-                        </div>
+                {/* Show available streaming options or fallback options */}
+                <div className="space-y-6">
+                  {/* Streaming Services */}
+                  {watchProviders?.flatrate && watchProviders.flatrate.length > 0 ? (
+                    <div>
+                      <h4 className="font-semibold text-white mb-3 flex items-center space-x-2">
+                        <span className="w-3 h-3 bg-green-500 rounded-full"></span>
+                        <span>Available on Streaming Services</span>
+                      </h4>
+                      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                        {watchProviders.flatrate.map((provider) => (
+                          <motion.a
+                            key={provider.provider_id}
+                            href={getStreamingUrl(provider)}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="bg-gray-800/50 rounded-xl p-4 text-center hover:bg-gray-700/50 transition-all duration-300 border border-gray-600/30 hover:border-green-500/50"
+                            whileHover={{ scale: 1.05 }}
+                            whileTap={{ scale: 0.95 }}
+                          >
+                            <img
+                              src={getImageUrl(provider.logo_path, 'w92')}
+                              alt={provider.provider_name}
+                              className="w-16 h-16 rounded-lg mx-auto mb-3 object-cover"
+                              onError={(e) => {
+                                e.currentTarget.src = `https://via.placeholder.com/64x64/374151/ffffff?text=${provider.provider_name.charAt(0)}`;
+                              }}
+                            />
+                            <span className="text-white text-sm font-medium block mb-2">{provider.provider_name}</span>
+                            <div className="flex items-center justify-center space-x-1 text-green-400 text-xs">
+                              <ExternalLink className="w-3 h-3" />
+                              <span>Watch Now</span>
+                            </div>
+                          </motion.a>
+                        ))}
                       </div>
-                    )}
-                    
-                    {watchProviders.rent && (
-                      <div>
-                        <h4 className="font-semibold text-white mb-3">Rent</h4>
-                        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                          {watchProviders.rent.map((provider) => (
-                            <motion.a
-                              key={provider.provider_id}
-                              href={getStreamingUrl(provider)}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              className="bg-gray-800/50 rounded-xl p-4 text-center hover:bg-gray-700/50 transition-all duration-300 border border-gray-600/30 hover:border-green-500/50"
-                              whileHover={{ scale: 1.05 }}
-                              whileTap={{ scale: 0.95 }}
-                            >
-                              <img
-                                src={getImageUrl(provider.logo_path, 'w92')}
-                                alt={provider.provider_name}
-                                className="w-16 h-16 rounded-lg mx-auto mb-3"
-                              />
-                              <span className="text-white text-sm font-medium block mb-2">{provider.provider_name}</span>
-                              <div className="flex items-center justify-center space-x-1 text-green-400 text-xs">
-                                <ExternalLink className="w-3 h-3" />
-                                <span>Rent Now</span>
-                              </div>
-                            </motion.a>
-                          ))}
-                        </div>
+                    </div>
+                  ) : null}
+                  
+                  {/* Rent Options */}
+                  {watchProviders?.rent && watchProviders.rent.length > 0 ? (
+                    <div>
+                      <h4 className="font-semibold text-white mb-3 flex items-center space-x-2">
+                        <span className="w-3 h-3 bg-yellow-500 rounded-full"></span>
+                        <span>Available for Rent</span>
+                      </h4>
+                      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                        {watchProviders.rent.map((provider) => (
+                          <motion.a
+                            key={provider.provider_id}
+                            href={getStreamingUrl(provider)}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="bg-gray-800/50 rounded-xl p-4 text-center hover:bg-gray-700/50 transition-all duration-300 border border-gray-600/30 hover:border-yellow-500/50"
+                            whileHover={{ scale: 1.05 }}
+                            whileTap={{ scale: 0.95 }}
+                          >
+                            <img
+                              src={getImageUrl(provider.logo_path, 'w92')}
+                              alt={provider.provider_name}
+                              className="w-16 h-16 rounded-lg mx-auto mb-3 object-cover"
+                              onError={(e) => {
+                                e.currentTarget.src = `https://via.placeholder.com/64x64/374151/ffffff?text=${provider.provider_name.charAt(0)}`;
+                              }}
+                            />
+                            <span className="text-white text-sm font-medium block mb-2">{provider.provider_name}</span>
+                            <div className="flex items-center justify-center space-x-1 text-yellow-400 text-xs">
+                              <ExternalLink className="w-3 h-3" />
+                              <span>Rent Now</span>
+                            </div>
+                          </motion.a>
+                        ))}
                       </div>
-                    )}
-                    
-                    {watchProviders.buy && (
-                      <div>
-                        <h4 className="font-semibold text-white mb-3">Buy</h4>
-                        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                          {watchProviders.buy.map((provider) => (
-                            <motion.a
-                              key={provider.provider_id}
-                              href={getStreamingUrl(provider)}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              className="bg-gray-800/50 rounded-xl p-4 text-center hover:bg-gray-700/50 transition-all duration-300 border border-gray-600/30 hover:border-purple-500/50"
-                              whileHover={{ scale: 1.05 }}
-                              whileTap={{ scale: 0.95 }}
-                            >
-                              <img
-                                src={getImageUrl(provider.logo_path, 'w92')}
-                                alt={provider.provider_name}
-                                className="w-16 h-16 rounded-lg mx-auto mb-3"
-                              />
-                              <span className="text-white text-sm font-medium block mb-2">{provider.provider_name}</span>
-                              <div className="flex items-center justify-center space-x-1 text-purple-400 text-xs">
-                                <ExternalLink className="w-3 h-3" />
-                                <span>Buy Now</span>
-                              </div>
-                            </motion.a>
-                          ))}
-                        </div>
+                    </div>
+                  ) : null}
+                  
+                  {/* Buy Options */}
+                  {watchProviders?.buy && watchProviders.buy.length > 0 ? (
+                    <div>
+                      <h4 className="font-semibold text-white mb-3 flex items-center space-x-2">
+                        <span className="w-3 h-3 bg-purple-500 rounded-full"></span>
+                        <span>Available for Purchase</span>
+                      </h4>
+                      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                        {watchProviders.buy.map((provider) => (
+                          <motion.a
+                            key={provider.provider_id}
+                            href={getStreamingUrl(provider)}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="bg-gray-800/50 rounded-xl p-4 text-center hover:bg-gray-700/50 transition-all duration-300 border border-gray-600/30 hover:border-purple-500/50"
+                            whileHover={{ scale: 1.05 }}
+                            whileTap={{ scale: 0.95 }}
+                          >
+                            <img
+                              src={getImageUrl(provider.logo_path, 'w92')}
+                              alt={provider.provider_name}
+                              className="w-16 h-16 rounded-lg mx-auto mb-3 object-cover"
+                              onError={(e) => {
+                                e.currentTarget.src = `https://via.placeholder.com/64x64/374151/ffffff?text=${provider.provider_name.charAt(0)}`;
+                              }}
+                            />
+                            <span className="text-white text-sm font-medium block mb-2">{provider.provider_name}</span>
+                            <div className="flex items-center justify-center space-x-1 text-purple-400 text-xs">
+                              <ExternalLink className="w-3 h-3" />
+                              <span>Buy Now</span>
+                            </div>
+                          </motion.a>
+                        ))}
                       </div>
-                    )}
-                  </div>
-                ) : (
-                  <div className="text-center py-12">
-                    <Tv className="w-16 h-16 text-gray-600 mx-auto mb-4" />
-                    <h4 className="text-lg font-bold text-white mb-2">No streaming options available</h4>
-                    <p className="text-gray-400">
-                      Streaming information is not available for this movie in your region.
-                    </p>
-                  </div>
-                )}
+                    </div>
+                  ) : null}
+
+                  {/* Fallback Search Options */}
+                  {(!watchProviders || (!watchProviders.flatrate && !watchProviders.rent && !watchProviders.buy)) && (
+                    <div>
+                      <h4 className="font-semibold text-white mb-3 flex items-center space-x-2">
+                        <span className="w-3 h-3 bg-blue-500 rounded-full"></span>
+                        <span>Search on Popular Platforms</span>
+                      </h4>
+                      <p className="text-gray-400 mb-4 text-sm">
+                        No specific streaming information available. Try searching on these popular platforms:
+                      </p>
+                      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                        {fallbackProviders.map((provider) => (
+                          <motion.a
+                            key={provider.provider_id}
+                            href={getStreamingUrl(provider)}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="bg-gray-800/50 rounded-xl p-4 text-center hover:bg-gray-700/50 transition-all duration-300 border border-gray-600/30 hover:border-blue-500/50"
+                            whileHover={{ scale: 1.05 }}
+                            whileTap={{ scale: 0.95 }}
+                          >
+                            <div className="w-16 h-16 rounded-lg mx-auto mb-3 bg-gradient-to-br from-gray-600 to-gray-700 flex items-center justify-center">
+                              <span className="text-white font-bold text-lg">
+                                {provider.provider_name.charAt(0)}
+                              </span>
+                            </div>
+                            <span className="text-white text-sm font-medium block mb-2">{provider.provider_name}</span>
+                            <div className="flex items-center justify-center space-x-1 text-blue-400 text-xs">
+                              <ExternalLink className="w-3 h-3" />
+                              <span>Search</span>
+                            </div>
+                          </motion.a>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                </div>
               </div>
             )}
           </div>
